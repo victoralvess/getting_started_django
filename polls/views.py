@@ -3,12 +3,15 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
 from django.db.models import F
+from django.utils import timezone
 
 from .models import Question, Choice
 
 # Create your views here.
 def index(request):
-	latest_question_list = Question.objects.order_by('-pub_date')[:5]
+	latest_question_list = Question.objects.filter(
+				pub_date__lte=timezone.now()
+			).order_by('-pub_date')[:5]
 	
 	# template = loader.get_template('polls/index.html')
 	
@@ -21,12 +24,18 @@ def index(request):
 
 def detail(request, question_id):
 	'''
+	Older Code
+
 	try:
 		question = Question.objects.get(pk=question_id)
 	except Question.DoesNotExist:
 		raise Http404("Question does not exist.")
 	'''
-	question = get_object_or_404(Question, pk=question_id)
+	# Excludes any questions that aren't published yet.
+	queryset = Question.objects.filter(
+		pub_date__lte = timezone.now()
+	)
+	question = get_object_or_404(queryset, pk=question_id)
 
 	return render(request, 'polls/detail.html', { 'question': question })
 	# return HttpResponse("You're looking at question %s." % question_id)
